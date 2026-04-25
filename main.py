@@ -44,7 +44,7 @@ def plot_function(df, col, mapa_etiquetas, titulo, etiqueta_x):
     df = df.copy()  # Evitar modificar el DataFrame original
     df['Condicion'] = df[col].map(mapa_etiquetas).fillna('Desconocido')
     # Crear la columna de fallecidos de forma binaria
-    df['FALLECIDO'] = df['DATE_DIED'].apply(lambda x: 'No' if str(x) != '9999-99-99' else 'Sí')
+    df['FALLECIDO'] = df['DATE_DIED'].apply(lambda x: 'Si' if str(x) != '9999-99-99' else 'No')
     crosstab = pd.crosstab(df['Condicion'], df['FALLECIDO'], normalize="index")
     crosstab.plot(
         kind='bar',
