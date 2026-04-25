@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from pandas import crosstab
 import sqlite3
-
-    
-
+def get_nombre_columna(df):
+    df = df.copy()  # Evitar modificar el DataFrame original
+    for col in df.columns:
+        print(f'Columna: {col}')
 def data_injection(df):
     try:
         with sqlite3.connect('pacientes.db') as conn:
@@ -32,8 +33,7 @@ def data_injection(df):
             # Aplicar todos los mappings de una vez
             for col, mapping in mappings.items():
                 if col in df.columns:
-                        df[col] = df[col].replace(mapping)
-                
+                        df[col] = df[col].replace(mapping)  
             df['DATE_DIED'] = pd.to_datetime(df['DATE_DIED'], errors='coerce',dayfirst=True)
             df['DATE_DIED'] = df['DATE_DIED'].dt.strftime('%Y-%m-%d').fillna('Vivo')
             df.to_sql('informacion_pacientes', conn, if_exists='replace', index=False,chunksize=1000)
@@ -70,12 +70,16 @@ def Main():
                          , 'Diabetes vs Fallecidos', 'Categoría'),
             'obesidad': ('OBESITY',  
                          {1: 'Con Obesidad',  2: 'Sin Obesidad'}
-                         , 'Obesidad vs Fallecidos', 'Categoría'),      
+                         , 'Obesidad vs Fallecidos', 'Categoría'),
+            
+             
+                
         }
     while True:
         print("\n=== ANÁLISIS COVID-19 MÉXICO ===")
         print("  diabetes      → Relación diabetes y fallecidos")
         print("  obesidad      → Relación obesidad y fallecidos")
+        print("  obesidad y diabetes → Relación obesidad y diabetes con fallecidos")
         print("  data-cleaning → Limpiar y guardar en SQLite")
         print("  salir         → Terminar")
         print("=" * 32)
@@ -86,10 +90,14 @@ def Main():
             plot_function(df, *opciones[entrada])
         elif entrada =='data-cleaning':
             data_injection(df)
+        elif entrada == 'obesidad y diabetes':
+            df = df.copy()  # Evitar modificar el DataFrame original
+            df['Condicion'] = df.apply(lambda row: 'Obesidad y Diabetes' if row['OBESITY'] == 1 and row['DIABETES'] == 1 else 'Sin Obesidad y Diabetes', axis=1)
+            plot_function(df, 'Condicion', {'Obesidad y Diabetes': 'Obesidad y Diabetes', 'Sin Obesidad y Diabetes': 'Sin Obesidad y Diabetes'}, 'Obesidad y Diabetes vs Fallecidos', 'Categoría')
         elif entrada == 'salir':
             print("Saliendo del programa.")
             break
         else:
             print("Entrada no válida. Por favor, ingrese 'diabetes', 'obesidad' o 'salir'.")
-
 Main()
+
